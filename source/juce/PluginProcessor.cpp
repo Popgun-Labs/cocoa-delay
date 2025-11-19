@@ -49,37 +49,97 @@ juce::AudioProcessorValueTreeState::ParameterLayout CocoaDelayAudioProcessor::cr
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("delayTime", "Delay Time", 0.001f, 2.0f, 0.2f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("lfoAmount", "LFO Amount", 0.0f, 0.5f, 0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("lfoFrequency", "LFO Frequency", 0.1f, 10.0f, 2.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("driftAmount", "Drift Amount", 0.0f, 0.05f, 0.001f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("driftSpeed", "Drift Speed", 0.1f, 10.0f, 1.0f));
+    // Delay Time: 0.001 to 2.0s. Skewed for easier control of short delays.
+    auto delayTimeRange = juce::NormalisableRange<float>(0.001f, 2.0f, 0.001f);
+    delayTimeRange.setSkewForCentre(0.5f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("delayTime", "Delay Time", delayTimeRange, 0.2f, "", juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return value < 1.0f ? juce::String(value * 1000.0f, 1) + " ms" : juce::String(value, 2) + " s"; },
+        [](const juce::String& text) { return text.contains("ms") ? text.getFloatValue() / 1000.0f : text.getFloatValue(); }));
+
+    // LFO Amount: 0.0 to 0.5. Skewed.
+    auto lfoAmountRange = juce::NormalisableRange<float>(0.0f, 0.5f, 0.001f);
+    lfoAmountRange.setSkewForCentre(0.125f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("lfoAmount", "LFO Amount", lfoAmountRange, 0.0f));
+
+    // LFO Frequency: 0.1 to 10.0 Hz. Skewed for center at 1.0 Hz.
+    auto lfoFreqRange = juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f);
+    lfoFreqRange.setSkewForCentre(1.0f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("lfoFrequency", "LFO Frequency", lfoFreqRange, 2.0f, "Hz"));
+
+    // Drift Amount: 0.0 to 0.05. Skewed.
+    auto driftAmountRange = juce::NormalisableRange<float>(0.0f, 0.05f, 0.0001f);
+    driftAmountRange.setSkewForCentre(0.0125f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("driftAmount", "Drift Amount", driftAmountRange, 0.001f));
+
+    // Drift Speed: 0.1 to 10.0 Hz. Skewed.
+    auto driftSpeedRange = juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f);
+    driftSpeedRange.setSkewForCentre(2.5f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("driftSpeed", "Drift Speed", driftSpeedRange, 1.0f, "Hz"));
     
     params.push_back(std::make_unique<juce::AudioParameterChoice>("tempoSyncTime", "Tempo Sync Time", 
         juce::StringArray{ "Off", "1", "1/2D", "1/2", "1/2T", "1/4D", "1/4", "1/4T", "1/8D", "1/8", "1/8T", "1/16D", "1/16", "1/16T", "1/32D", "1/32", "1/32T", "1/64D", "1/64", "1/64T" }, 0));
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("feedback", "Feedback", -1.0f, 1.0f, 0.5f));
+    // Feedback: -100% to 100%.
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("feedback", "Feedback", juce::NormalisableRange<float>(-1.0f, 1.0f, 0.01f), 0.5f, "", juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value * 100.0f, 0) + " %"; },
+        [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
+
+    // Stereo Offset: -0.5 to 0.5. 
     params.push_back(std::make_unique<juce::AudioParameterFloat>("stereoOffset", "Stereo Offset", -0.5f, 0.5f, 0.0f));
     
     params.push_back(std::make_unique<juce::AudioParameterChoice>("panMode", "Pan Mode", 
         juce::StringArray{ "Static", "Ping Pong", "Circular" }, 0));
         
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("pan", "Panning", -Util::pi * 0.5f, Util::pi * 0.5f, 0.0f));
+    // Panning: -90 to 90 deg.
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("pan", "Panning", juce::NormalisableRange<float>(-Util::pi * 0.5f, Util::pi * 0.5f, 0.01f), 0.0f, "", juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value * 180.0f / Util::pi, 0) + " deg"; },
+        [](const juce::String& text) { return text.getFloatValue() * Util::pi / 180.0f; }));
+
     params.push_back(std::make_unique<juce::AudioParameterFloat>("duckAmount", "Ducking Amount", 0.0f, 10.0f, 0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("duckAttackSpeed", "Ducking Attack", 0.1f, 100.0f, 10.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("duckReleaseSpeed", "Ducking Release", 0.1f, 100.0f, 10.0f));
+    
+    // Ducking Attack/Release: 0.1 to 100. Skewed. Label "Speed".
+    auto duckSpeedRange = juce::NormalisableRange<float>(0.1f, 100.0f, 0.1f);
+    duckSpeedRange.setSkewForCentre(25.0f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("duckAttackSpeed", "Ducking Attack", duckSpeedRange, 10.0f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("duckReleaseSpeed", "Ducking Release", duckSpeedRange, 10.0f));
     
     params.push_back(std::make_unique<juce::AudioParameterChoice>("filterMode", "Filter Mode", 
         juce::StringArray{ "1 Pole", "2 Pole", "4 Pole", "State Variable" }, 0));
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("lowPassCutoff", "Low Pass Cutoff", 0.01f, 1.0f, 0.75f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("highPassCutoff", "High Pass Cutoff", 0.001f, 0.99f, 0.001f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("driveGain", "Drive Amount", 0.0f, 10.0f, 0.1f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("driveMix", "Drive Mix", 0.0f, 1.0f, 1.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("driveCutoff", "Drive Filter Cutoff", 0.01f, 1.0f, 1.0f));
+    // Filter Cutoff: 1% to 100%.
+    auto cutoffRange = juce::NormalisableRange<float>(0.01f, 1.0f, 0.001f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("lowPassCutoff", "Low Pass Cutoff", cutoffRange, 0.75f, "", juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value * 100.0f, 1) + " %"; },
+        [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("highPassCutoff", "High Pass Cutoff", cutoffRange, 0.001f, "", juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value * 100.0f, 1) + " %"; },
+        [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
+
+    // Drive Gain: 0.0 to 10.0. Skewed.
+    auto driveGainRange = juce::NormalisableRange<float>(0.0f, 10.0f, 0.01f);
+    driveGainRange.setSkewForCentre(2.5f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("driveGain", "Drive Amount", driveGainRange, 0.1f));
+
+    // Drive Mix: 0% to 100%.
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("driveMix", "Drive Mix", juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 1.0f, "", juce::AudioProcessorParameter::genericParameter,
+         [](float value, int) { return juce::String(value * 100.0f, 0) + " %"; },
+         [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
+
+    // Drive Cutoff
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("driveCutoff", "Drive Filter Cutoff", cutoffRange, 1.0f, "", juce::AudioProcessorParameter::genericParameter,
+        [](float value, int) { return juce::String(value * 100.0f, 1) + " %"; },
+        [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
+
     params.push_back(std::make_unique<juce::AudioParameterInt>("driveIterations", "Drive Iterations", 1, 16, 1));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("dryVolume", "Dry Volume", 0.0f, 2.0f, 1.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("wetVolume", "Wet Volume", 0.0f, 2.0f, 0.5f));
+    
+    // Dry/Wet Volume: 0% to 200%.
+    auto volRange = juce::NormalisableRange<float>(0.0f, 2.0f, 0.01f);
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("dryVolume", "Dry Volume", volRange, 1.0f, "", juce::AudioProcessorParameter::genericParameter,
+         [](float value, int) { return juce::String(value * 100.0f, 0) + " %"; },
+         [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("wetVolume", "Wet Volume", volRange, 0.5f, "", juce::AudioProcessorParameter::genericParameter,
+         [](float value, int) { return juce::String(value * 100.0f, 0) + " %"; },
+         [](const juce::String& text) { return text.getFloatValue() / 100.0f; }));
 
     return { params.begin(), params.end() };
 }
@@ -269,7 +329,6 @@ void CocoaDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 juce::AudioProcessorEditor* CocoaDelayAudioProcessor::createEditor()
 {
     return new juce::GenericAudioProcessorEditor (*this);
-    // return new CocoaDelayAudioProcessorEditor (*this);
 }
 
 bool CocoaDelayAudioProcessor::hasEditor() const
@@ -502,4 +561,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new CocoaDelayAudioProcessor();
 }
-
