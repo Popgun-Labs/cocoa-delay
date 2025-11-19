@@ -56,7 +56,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout CocoaDelayAudioProcessor::cr
     params.push_back(std::make_unique<juce::AudioParameterFloat>("driftSpeed", "Drift Speed", 0.1f, 10.0f, 1.0f));
     
     params.push_back(std::make_unique<juce::AudioParameterChoice>("tempoSyncTime", "Tempo Sync Time", 
-        juce::StringArray{ "Off", "1/8D", "1/2D", "1/2", "1/2T", "1/4D", "1/4", "1/4T", "1/8D", "1/8", "1/8T", "1/16D", "1/16", "1/16T", "1/32D", "1/32", "1/32T", "1/64D", "1/64", "1/64T", "1" }, 0));
+        juce::StringArray{ "Off", "1", "1/2D", "1/2", "1/2T", "1/4D", "1/4", "1/4T", "1/8D", "1/8", "1/8T", "1/16D", "1/16", "1/16T", "1/32D", "1/32", "1/32T", "1/64D", "1/64", "1/64T" }, 0));
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>("feedback", "Feedback", -1.0f, 1.0f, 0.5f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("stereoOffset", "Stereo Offset", -0.5f, 0.5f, 0.0f));
