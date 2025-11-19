@@ -5,14 +5,13 @@
 CocoaDelayAudioProcessorEditor::CocoaDelayAudioProcessorEditor (CocoaDelayAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    setSize (700, 400);
     setLookAndFeel(&cocoaLookAndFeel);
 
     // Helper to add sliders
     auto addKnob = [&](juce::Slider& slider, std::unique_ptr<SliderAttachment>& attachment, juce::String paramId, juce::String name)
     {
         slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-        slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 16);
         attachment.reset(new SliderAttachment(audioProcessor.apvts, paramId, slider));
         
         auto comp = std::make_unique<ParameterComponent>(name, &slider);
@@ -67,6 +66,8 @@ CocoaDelayAudioProcessorEditor::CocoaDelayAudioProcessorEditor (CocoaDelayAudioP
     // SIDEBAR (Dry/Wet)
     addKnob(drySlider, dryAttachment, "dryVolume", "Dry");
     addKnob(wetSlider, wetAttachment, "wetVolume", "Wet");
+
+    setSize (700, 460);
 }
 
 CocoaDelayAudioProcessorEditor::~CocoaDelayAudioProcessorEditor()
@@ -161,7 +162,8 @@ void CocoaDelayAudioProcessorEditor::resized()
     // Layout: [Time][Sync]  [Amt][Freq]  [Amt][Speed]
     int cellW = 80;
     int margin = 10;
-    int x = 20;
+    int sidebarWidth = 100;
+    int x = sidebarWidth + 20;
     
     topRow.removeFromTop(40); // Header space
     
@@ -175,7 +177,7 @@ void CocoaDelayAudioProcessorEditor::resized()
     paramComponents[5]->setBounds(x, topRow.getY(), cellW, 80);
     
     // Mid Row: Feedback (4), Ducking (3)
-    x = 20;
+    x = sidebarWidth + 20;
     midRow.removeFromTop(40);
     
     paramComponents[6]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
@@ -188,7 +190,7 @@ void CocoaDelayAudioProcessorEditor::resized()
     paramComponents[12]->setBounds(x, midRow.getY(), cellW, 80);
     
     // Bot Row: Filter (3), Drive (4)
-    x = 20;
+    x = sidebarWidth + 20;
     botRow.removeFromTop(40);
     
     paramComponents[13]->setBounds(x, botRow.getY() + 20, 100, 40); x += 100 + margin;
