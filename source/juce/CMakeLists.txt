@@ -60,3 +60,13 @@ target_compile_definitions(CocoaDelay PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+    pkg_check_modules(WEBKIT2 REQUIRED webkit2gtk-4.0)
+    pkg_check_modules(CURL REQUIRED libcurl)
+    
+    target_include_directories(CocoaDelay PRIVATE ${GTK3_INCLUDE_DIRS} ${WEBKIT2_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
+    target_link_libraries(CocoaDelay PRIVATE ${GTK3_LIBRARIES} ${WEBKIT2_LIBRARIES} ${CURL_LIBRARIES})
+endif()
+
