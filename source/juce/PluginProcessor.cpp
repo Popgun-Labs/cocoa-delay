@@ -90,10 +90,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout CocoaDelayAudioProcessor::cr
     params.push_back(std::make_unique<juce::AudioParameterChoice>("panMode", "Pan Mode", 
         juce::StringArray{ "Static", "Ping Pong", "Circular" }, 0));
         
-    // Panning: -90 to 90 deg.
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("pan", "Panning", juce::NormalisableRange<float>(-Util::pi * 0.5f, Util::pi * 0.5f, 0.01f), 0.0f, "", juce::AudioProcessorParameter::genericParameter,
-        [](float value, int) { return juce::String(value * 180.0f / Util::pi, 0) + " deg"; },
-        [](const juce::String& text) { return text.getFloatValue() * Util::pi / 180.0f; }));
+    // Panning: -50 to 50 (mapped to -90..90 deg internally)
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("pan", "Panning", -50.0f, 50.0f, 0.0f));
 
     params.push_back(std::make_unique<juce::AudioParameterFloat>("duckAmount", "Ducking Amount", 0.0f, 10.0f, 0.0f));
     
@@ -476,7 +474,10 @@ void CocoaDelayAudioProcessor::UpdateParameters()
     }
 
     // pan amount smoothing
-    auto panAmount = (double)*panParam;
+    // Convert -50..50 range to radians (-pi/2 .. pi/2)
+    auto panValue = (double)*panParam;
+    auto panAmount = (panValue / 50.0) * (Util::pi * 0.5);
+    
     auto stationaryPanAmountTarget = (currentPanMode == Params::PanModes::stationary || currentPanMode == Params::PanModes::pingPong) ? panAmount : 0.0;
     stationaryPanAmount += (stationaryPanAmountTarget - stationaryPanAmount) * 100.0 * dt;
     auto circularPanAmountTarget = (currentPanMode == Params::PanModes::circular ? panAmount : 0.0);
