@@ -37,6 +37,7 @@ target_sources(CocoaDelay
         PluginProcessor.h
         PluginEditor.cpp
         PluginEditor.h
+        Style.h
         Filter.cpp
         Filter.h
         StatefulDrive.cpp

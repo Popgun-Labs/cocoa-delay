@@ -326,7 +326,8 @@ void CocoaDelayAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 //==============================================================================
 juce::AudioProcessorEditor* CocoaDelayAudioProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor (*this);
+    return new CocoaDelayAudioProcessorEditor (*this);
+    // return new juce::GenericAudioProcessorEditor (*this);
 }
 
 bool CocoaDelayAudioProcessor::hasEditor() const
