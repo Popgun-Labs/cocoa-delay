@@ -21,6 +21,12 @@ CocoaDelayAudioProcessorEditor::CocoaDelayAudioProcessorEditor (CocoaDelayAudioP
     
     auto addCombo = [&](juce::ComboBox& combo, std::unique_ptr<ComboBoxAttachment>& attachment, juce::String paramId, juce::String name)
     {
+        // Manually populate items to ensure they appear
+        if (auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(audioProcessor.apvts.getParameter(paramId)))
+        {
+            combo.addItemList(choiceParam->choices, 1);
+        }
+        
         // Items are populated by attachment
         attachment.reset(new ComboBoxAttachment(audioProcessor.apvts, paramId, combo));
         
@@ -67,7 +73,7 @@ CocoaDelayAudioProcessorEditor::CocoaDelayAudioProcessorEditor (CocoaDelayAudioP
     addKnob(drySlider, dryAttachment, "dryVolume", "Dry");
     addKnob(wetSlider, wetAttachment, "wetVolume", "Wet");
 
-    setSize (700, 460);
+    setSize (860, 380);
 }
 
 CocoaDelayAudioProcessorEditor::~CocoaDelayAudioProcessorEditor()
