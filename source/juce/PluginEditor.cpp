@@ -170,11 +170,13 @@ void CocoaDelayAudioProcessorEditor::resized()
     int margin = 10;
     int sidebarWidth = 100;
     int x = sidebarWidth + 20;
+
+    int comboHeight = 50;
     
     topRow.removeFromTop(40); // Header space
     
     paramComponents[0]->setBounds(x, topRow.getY(), cellW, 80); x += cellW + margin;
-    paramComponents[1]->setBounds(x, topRow.getY() + 20, 100, 40); x += 100 + margin + 20; // Combo needs less height
+    paramComponents[1]->setBounds(x, topRow.getY() + 20, 100, comboHeight); x += 100 + margin + 20; // Combo needs less height
     
     paramComponents[2]->setBounds(x, topRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[3]->setBounds(x, topRow.getY(), cellW, 80); x += cellW + margin + 20;
@@ -189,7 +191,7 @@ void CocoaDelayAudioProcessorEditor::resized()
     paramComponents[6]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[7]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[8]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
-    paramComponents[9]->setBounds(x, midRow.getY() + 20, 100, 40); x += 100 + margin + 40;
+    paramComponents[9]->setBounds(x, midRow.getY() + 20, 100, comboHeight); x += 100 + margin + 40;
     
     paramComponents[10]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[11]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;

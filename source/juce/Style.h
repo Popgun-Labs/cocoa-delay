@@ -113,6 +113,16 @@ namespace CocoaStyle
         {
             return juce::Font (14.0f);
         }
+        
+        // juce::Font getComboBoxFont (juce::ComboBox&) override
+        // {
+        //     return juce::Font (20.0f);
+        // }
+
+        // Font getPopupMenuFont() override
+        // {
+        //     return juce::Font (20.0f);
+        // }
     };
 }
 
