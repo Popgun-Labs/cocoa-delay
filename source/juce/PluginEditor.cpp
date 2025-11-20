@@ -73,7 +73,7 @@ CocoaDelayAudioProcessorEditor::CocoaDelayAudioProcessorEditor (CocoaDelayAudioP
     addKnob(drySlider, dryAttachment, "dryVolume", "Dry");
     addKnob(wetSlider, wetAttachment, "wetVolume", "Wet");
 
-    setSize (900, 380);
+    setSize (900, 430);
 }
 
 CocoaDelayAudioProcessorEditor::~CocoaDelayAudioProcessorEditor()
@@ -92,30 +92,56 @@ void CocoaDelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour(CocoaStyle::sidebar);
     g.fillRect(sidebar);
     
+    // Top Right Gradient - Subtle purple glow
+    juce::Rectangle<int> mainArea(sidebarWidth, 0, getWidth() - sidebarWidth, getHeight());
+    
+    // Top Section Background - Distinct Purple Panel
+    // The top section (Delay/LFO/Drift) has a solid purple background
+    // It spans the full width of the main area and height approx 140
+    juce::Rectangle<int> topPanelRect(sidebarWidth, 0, getWidth() - sidebarWidth, 140);
+    g.setColour(CocoaStyle::backgroundPurple.withAlpha(0.5f)); // Solid purple with some transparency or mixing
+    g.fillRect(topPanelRect);
+
+    // Subtle gradient for the rest?
+    // Actually, let's just stick to the solid backgroundDark for the bottom and the purple for the top
+    // But maybe blend it down?
+    // The reference shows a sharp-ish distinction or at least a clear "top block".
+    
+    // Let's draw a gradient overlay on the whole thing to tie it together
+    juce::ColourGradient linearGrad(
+        CocoaStyle::backgroundPurple.withAlpha(0.1f), (float)getWidth(), 0.0f,
+        CocoaStyle::backgroundDark, (float)sidebarWidth, (float)getHeight(),
+        false);
+        
+    g.setGradientFill(linearGrad);
+    g.fillRect(mainArea);
+    
     // Sidebar Text
     g.setColour(CocoaStyle::textWhite);
     g.setFont(24.0f);
     
     // Draw vertical text
-    auto transform = juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi, 25, getHeight() / 2.0f);
+    auto centerX = sidebarWidth / 2.0f;
+    auto centerY = getHeight() / 2.0f;
+    auto transform = juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi, centerX, centerY);
     g.addTransform(transform);
-    g.drawText("COCOA DELAY", -150, 0, 300, 50, juce::Justification::centred); // Coordinates are weird due to rotation
+    g.drawText("COCOA DELAY", centerY - 100, centerX - 25, 200, 50, juce::Justification::centred);
     g.addTransform(transform.inverted());
     
     // Draw Section Headers
     g.setColour(CocoaStyle::textWhite);
-    g.setFont(18.0f);
+    g.setFont(juce::Font(18.0f, juce::Font::bold));
     
-    // Positions hardcoded based on layout below
-    int topRowY = 20;
-    int midRowY = 140;
-    int botRowY = 260;
+    // Positions
+    int topRowY = 10;
+    int midRowY = 150;
+    int botRowY = 290;
     
     int mainX = sidebarWidth;
     int sectionW = (getWidth() - sidebarWidth) / 3;
     
     g.drawText("DELAY", mainX, topRowY, sectionW, 30, juce::Justification::centred);
-    g.drawText("LFO", mainX + sectionW, topRowY, sectionW / 2 + 20, 30, juce::Justification::centred); // LFO is smaller
+    g.drawText("LFO", mainX + sectionW, topRowY, sectionW / 2 + 20, 30, juce::Justification::centred);
     g.drawText("DRIFT", mainX + sectionW * 1.8f, topRowY, sectionW, 30, juce::Justification::centred);
     
     g.drawText("FEEDBACK", mainX, midRowY, sectionW * 1.5f, 30, juce::Justification::centred);
@@ -160,23 +186,24 @@ void CocoaDelayAudioProcessorEditor::resized()
     paramComponents[20]->setBounds(mixArea.removeFromBottom(120).reduced(20)); // Dry
     
     // Main Grid
-    auto topRow = area.removeFromTop(120);
-    auto midRow = area.removeFromTop(120);
-    auto botRow = area.removeFromTop(120);
+    auto topRow = area.removeFromTop(140);
+    auto midRow = area.removeFromTop(140);
+    auto botRow = area.removeFromTop(140);
     
     // Top Row: Delay (2), LFO (2), Drift (2)
     // Layout: [Time][Sync]  [Amt][Freq]  [Amt][Speed]
     int cellW = 80;
-    int margin = 10;
+    int margin = 12;
     int sidebarWidth = 140;
-    int x = sidebarWidth + 20;
+    int x = sidebarWidth + 25;
 
     int comboHeight = 50;
+    int comboWidth = 110;
     
-    topRow.removeFromTop(40); // Header space
+    topRow.removeFromTop(50); // Header space
     
     paramComponents[0]->setBounds(x, topRow.getY(), cellW, 80); x += cellW + margin;
-    paramComponents[1]->setBounds(x, topRow.getY() + 20, 100, comboHeight); x += 100 + margin + 20; // Combo needs less height
+    paramComponents[1]->setBounds(x, topRow.getY() + 15, comboWidth, comboHeight); x += comboWidth + margin + 15;
     
     paramComponents[2]->setBounds(x, topRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[3]->setBounds(x, topRow.getY(), cellW, 80); x += cellW + margin + 20;
@@ -185,25 +212,25 @@ void CocoaDelayAudioProcessorEditor::resized()
     paramComponents[5]->setBounds(x, topRow.getY(), cellW, 80);
     
     // Mid Row: Feedback (4), Ducking (3)
-    x = sidebarWidth + 20;
-    midRow.removeFromTop(40);
+    x = sidebarWidth + 25;
+    midRow.removeFromTop(50);
     
     paramComponents[6]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[7]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[8]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
-    paramComponents[9]->setBounds(x, midRow.getY() + 20, 100, comboHeight); x += 100 + margin + 40;
+    paramComponents[9]->setBounds(x, midRow.getY() + 15, comboWidth, comboHeight); x += comboWidth + margin + 30;
     
     paramComponents[10]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[11]->setBounds(x, midRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[12]->setBounds(x, midRow.getY(), cellW, 80);
     
     // Bot Row: Filter (3), Drive (4)
-    x = sidebarWidth + 20;
-    botRow.removeFromTop(40);
+    x = sidebarWidth + 25;
+    botRow.removeFromTop(50);
     
-    paramComponents[13]->setBounds(x, botRow.getY() + 20, 100, 40); x += 100 + margin;
+    paramComponents[13]->setBounds(x, botRow.getY() + 15, comboWidth, comboHeight); x += comboWidth + margin;
     paramComponents[14]->setBounds(x, botRow.getY(), cellW, 80); x += cellW + margin;
-    paramComponents[15]->setBounds(x, botRow.getY(), cellW, 80); x += cellW + margin + 40;
+    paramComponents[15]->setBounds(x, botRow.getY(), cellW, 80); x += cellW + margin + 30;
     
     paramComponents[16]->setBounds(x, botRow.getY(), cellW, 80); x += cellW + margin;
     paramComponents[17]->setBounds(x, botRow.getY(), cellW, 80); x += cellW + margin;
