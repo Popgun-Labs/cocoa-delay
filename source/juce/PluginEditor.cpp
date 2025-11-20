@@ -73,7 +73,7 @@ CocoaDelayAudioProcessorEditor::CocoaDelayAudioProcessorEditor (CocoaDelayAudioP
     addKnob(drySlider, dryAttachment, "dryVolume", "Dry");
     addKnob(wetSlider, wetAttachment, "wetVolume", "Wet");
 
-    setSize (860, 380);
+    setSize (900, 380);
 }
 
 CocoaDelayAudioProcessorEditor::~CocoaDelayAudioProcessorEditor()
@@ -87,7 +87,7 @@ void CocoaDelayAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll (CocoaStyle::backgroundDark);
     
     // Sidebar
-    auto sidebarWidth = 100;
+    auto sidebarWidth = 140;
     juce::Rectangle<int> sidebar(0, 0, sidebarWidth, getHeight());
     g.setColour(CocoaStyle::sidebar);
     g.fillRect(sidebar);
@@ -133,10 +133,10 @@ void CocoaDelayAudioProcessorEditor::paint (juce::Graphics& g)
 void CocoaDelayAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds();
-    auto sidebar = area.removeFromLeft(100);
+    auto sidebar = area.removeFromLeft(140);
     
     // Sidebar Mix controls
-    auto mixArea = sidebar.removeFromBottom(200);
+    auto mixArea = sidebar.removeFromBottom(280);
     mixArea.removeFromBottom(40); // Space for version
     
     // Assuming paramComponents order:
@@ -156,8 +156,8 @@ void CocoaDelayAudioProcessorEditor::resized()
     
     if (paramComponents.size() != 22) return; // Safety check
     
-    paramComponents[21]->setBounds(mixArea.removeFromBottom(80).reduced(10)); // Wet
-    paramComponents[20]->setBounds(mixArea.removeFromBottom(80).reduced(10)); // Dry
+    paramComponents[21]->setBounds(mixArea.removeFromBottom(120).reduced(20)); // Wet
+    paramComponents[20]->setBounds(mixArea.removeFromBottom(120).reduced(20)); // Dry
     
     // Main Grid
     auto topRow = area.removeFromTop(120);
@@ -168,7 +168,7 @@ void CocoaDelayAudioProcessorEditor::resized()
     // Layout: [Time][Sync]  [Amt][Freq]  [Amt][Speed]
     int cellW = 80;
     int margin = 10;
-    int sidebarWidth = 100;
+    int sidebarWidth = 140;
     int x = sidebarWidth + 20;
 
     int comboHeight = 50;
